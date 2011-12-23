@@ -3,7 +3,7 @@ namespace py requester
 /* Simple exception type */
 exception Exception
 {
-    1:string msg
+    1: string msg
 }
 
 struct Request {
