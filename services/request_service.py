@@ -2,6 +2,7 @@ from requester import Requester, ttypes as o
 import requests
 
 from thrift.protocol import TBinaryProtocol
+from thrift.transport import TTransport
 
 from hashlib import sha1
 from redis import Redis
@@ -125,6 +126,8 @@ class CachingRequestHandler(RequestHandler):
 
 class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
 
+    service_name = 'requester'
+
     def urlopen(self, request):
         print 'urlopen'
         # check the cache
@@ -153,9 +156,9 @@ class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
     def check_rate_allowed(self, request):
         return 1
 
-def run(host='127.0.0.1',port=9191):
+def run():
     from run_services import serve_service
-    serve_service(Requester, RequesterHandler())
+    serve_service(Requester, MatureRequestHandler())
 
 if __name__ == '__main__':
     run()

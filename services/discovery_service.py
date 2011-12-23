@@ -5,6 +5,8 @@ import random
 
 class DiscoveryHandler(object):
 
+    service_name = 'discovery'
+
     def __init__(self, redis_host='127.0.0.1'):
         self.redis_host = redis_host
         self.rc = Redis(self.redis_host)
@@ -55,6 +57,8 @@ class DiscoveryHandler(object):
         starts tracking new instance of service
         """
 
+        print 'registering service: %s' % service
+
         # try adding the new service to the service list
         if self.rc.sadd('discovery:service_list',
                         self.get_service_key(service=service)):
@@ -75,12 +79,14 @@ class DiscoveryHandler(object):
         removes service from tracking
         """
 
+        print 'removing service: %s' % service
+
         # make sure it's in the service list
         if self.rc.srem('discovery:service_list',
                         self.get_service_key(service=service)):
 
             # remove it's port
-            self.rc.srem(self.get_port_key(service=service),service.name)
+            self.rc.srem(self.get_port_key(service=service),service.port)
 
             # check if there are any ports for this service on this host
             if self.rc.scard(self.get_port_key(service=service)) == 0:
@@ -97,6 +103,8 @@ class DiscoveryHandler(object):
         returns matching service obj if found.
         raises exception if not found
         """
+
+        print 'finding service: %s' % service_name
 
         # check and see if we have a host running this service
         hosts = self.rc.smembers(self.get_host_key(service_name))
@@ -122,9 +130,9 @@ class DiscoveryHandler(object):
         return s
 
 
-def run(host='127.0.0.1',port=9191):
+def run():
     from run_services import serve_service
-    serve_service(Discovery, DiscoveryHandler())
+    serve_service(Discovery, DiscoveryHandler(),is_discovery=True)
 
 if __name__ == '__main__':
     run()

@@ -4,6 +4,13 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
+from lib.client import connect_discovery
+from lib.client import DISCOVERY_HOST, DISCOVERY_PORT
+
+import random
+
+from services.discovery_service import Discovery, o as do
+
 def serve(host='127.0.0.1',port=9191):
     # setup the processors for each of the services
     from services.scraper import Scraper
@@ -29,14 +36,48 @@ def serve(host='127.0.0.1',port=9191):
     print 'done'
 
 
-def serve_service(service, handler, host='127.0.0.1',port=9191):
+def serve_service(service, handler, host='127.0.0.1',port=None,
+                  is_discovery=False):
+
+    PORT_MIN = 9192
+    PORT_MAX = 10999
+    if not port and not is_discovery:
+        # choose a random port
+        port = random.randint(PORT_MIN,PORT_MAX)
+    elif not port and is_discovery:
+        # if we are discovery .. user our details
+        port = DISCOVERY_PORT
+        host = DISCOVERY_HOST
+
     processor = getattr(service,'Processor')(handler)
     transport = TSocket.TServerSocket(host,port)
     tfactory = TTransport.TBufferedTransportFactory()
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
     server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
+
+    print 'registering server: %s %s %s' % (
+            service.__name__,host,port)
+
+    # register our service w/ the discovery service
+    if not is_discovery:
+        with connect_discovery() as discovery_client:
+            service_details = do.Service(
+                host=host,
+                port=port,
+                name=service.__name__
+            )
+            discovery_client.register_service(service_details)
+
     print 'starting: %s %s %s' % (service,host,port)
-    server.serve()
+    try:
+        server.serve()
+    finally:
+        # tell the discovery service we're gone
+        if not is_discovery:
+            print 'removing service from discovery'
+            with connect_discovery() as discovery_client:
+                discovery_client.remove_service(service_details)
+
     print 'done'
 
 if __name__ == '__main__':

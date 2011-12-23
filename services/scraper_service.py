@@ -7,8 +7,9 @@ from redis import Redis
 
 from lib.client import connect as srvs_connect
 
-
 class ScraperHandler(object):
+
+    service_name = 'scraper'
 
     def get_links(self, url):
         """ returns back the href for all links on page """
