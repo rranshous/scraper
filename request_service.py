@@ -1,15 +1,12 @@
-from scraper import Scraper, ttypes as o
+from scraper import Requester, ttypes as o
 import requests
 
-from thrift.transport import TSocket
-from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
-from thrift.server import TServer
 
 from hashlib import sha1
 from redis import Redis
 
-class ScraperHandler(object):
+class RequestHandler(object):
     def __init__(self):
         pass
 
@@ -44,7 +41,7 @@ class ScraperHandler(object):
         """
         raise NotImplementedError
 
-class LiveScraperHandler(ScraperHandler):
+class LiveRequestHandler(RequestHandler):
 
     def urlopen(self,request):
         return self.live_urlopen(request)
@@ -76,13 +73,13 @@ class LiveScraperHandler(ScraperHandler):
         # and we're done!
         return response
 
-class CachingScraperHandler(ScraperHandler):
+class CachingRequestHandler(RequestHandler):
     def __init__(self,redis_host='127.0.0.1',cache_duration=2*60*60):
         self.redis_host = redis_host
         self.cache_duration = cache_duration
         self.rc = Redis(self.redis_host)
         self.pfactory = TBinaryProtocol.TBinaryProtocolFactory()
-        super(CachingScraperHandler,self).__init__()
+        super(CachingRequestHandler,self).__init__()
 
     def urlopen(self,request):
         return self.cached_urlopen(request)
@@ -106,6 +103,7 @@ class CachingScraperHandler(ScraperHandler):
         cache_key = self.get_cache_key(request)
         data = self._serialize_o(response)
         self.rc.set(cache_key,data)
+        # TODO: expire self.rc.expire(
         return True
 
     def get_cache_key(self,request):
@@ -125,7 +123,7 @@ class CachingScraperHandler(ScraperHandler):
         ret.read(prot)
         return ret
 
-class MatureScraperHandler(CachingScraperHandler,LiveScraperHandler):
+class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
 
     def urlopen(self, request):
         print 'urlopen'
@@ -155,18 +153,3 @@ class MatureScraperHandler(CachingScraperHandler,LiveScraperHandler):
     def check_rate_allowed(self, request):
         return 1
 
-
-def serve(host='127.0.0.1',port=9191):
-    handler = MatureScraperHandler()
-    processor = Scraper.Processor(handler)
-    transport = TSocket.TServerSocket(host,port)
-    tfactory = TTransport.TBufferedTransportFactory()
-    pfactory = TBinaryProtocol.TBinaryProtocolFactory()
-    server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
-    print 'starting'
-    server.serve()
-    print 'done'
-
-
-if __name__ == '__main__':
-    serve()
