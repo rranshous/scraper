@@ -116,7 +116,7 @@ class ScraperHandler(object):
 
         # list of urls to scrape, (url,depth)
         found_links = self.get_links(root_url)
-        links = [(x,0) for x in found_links]
+        links = set([(x,0) for x in found_links])
         while links:
             # next ?
             page_url, depth = links.pop()
@@ -127,14 +127,16 @@ class ScraperHandler(object):
                     new_links = [x.strip() for x in self.get_links(page_url)]
                     # we only want http(s) (other being mailto, javascript etc)
                     new_links = [x for x in new_links if x.startswith('http')]
-                    links += [(x,depth+1) for x in new_links]
                     found_links += new_links
+                    new_links = set([(x,depth+1) for x in new_links if x.startswith('http')])
+                    print 'new links: %s' % len(new_links)
+                    links.update(new_links)
                 except o.Exception, ex:
                     # fail, ignore for now
                     print 'o.Exception getting links: %s %s' % (page_url,ex.msg)
                 except Exception, ex:
                     # fail, ignore for now
-                    print 'Exception getting links: %s %s' % (page_url,ex.msg)
+                    print 'Exception getting links: %s %s' % (page_url,ex)
 
         # return our bounty
         return list(set(found_links))
