@@ -53,16 +53,22 @@ class LiveRequestHandler(RequestHandler):
 
     def live_urlopen(self, request):
         s = time()
+
+        method = request.method or 'get'
+        try:
+            getter = getattr(requests,method)
+        except AttributeError, ex:
+            raise o.Exception('Bad method: %s' % method)
+
         try:
             # use the requests getter to get the resource
-            http_response = requests.request(request.method or 'get',
-                                             request.url,
-                                             cookies=request.cookies,
-                                             timeout=self.timeout,
-                                             # don't just get headers
-                                             prefetch=True,
-                                             # we want raw data, not unicode
-                                             config={'decode_unicode':False})
+            http_response = getter(request.url,
+                                   cookies=request.cookies,
+                                   timeout=self.timeout,
+                                   # don't just get headers
+                                   prefetch=True,
+                                   # we want raw data, not unicode
+                                   config={'decode_unicode':False})
         except Exception, ex:
             # problem actually trying to get the resource
             raise o.Exception('HTTP Request Error: %s' % ex)
