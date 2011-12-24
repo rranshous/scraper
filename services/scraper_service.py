@@ -9,7 +9,10 @@ from urlparse import urljoin
 from cStringIO import StringIO
 import imghdr
 
+from thread_utils import thread_out_work
+
 from lib.client import connect as srvs_connect
+
 
 class ScraperHandler(object):
 
@@ -108,14 +111,67 @@ class ScraperHandler(object):
 
         return images
 
+
+    def _clean_links(self, links):
+        # we only want http(s) (other being mailto, javascript etc)
+        links = [x.strip() for x in links if x.startswith('http')]
+        return links
+
     def link_spider(self, root_url, max_depth):
         """ returns back all the links to given depth """
 
         # starting at the root url follow all links
         # keep following those links until they exceed the depth
 
+        def get_links(url):
+            try:
+                self.get_links(url)
+            except o.Exception, ex:
+                # fail, ignore for now
+                print 'To.Exception getting links: %s' % (ex.msg)
+            except Exception, ex:
+                # fail, ignore for now
+                print 'TException getting links: %s' % (ex)
+
+        try:
+            # initial links
+            found_links = self._clean_links(self.get_links(root_url))
+
+            # list of urls to scrape, (url,depth)
+            links = set([(x,0) for x in found_links])
+
+            while links:
+
+                # fan out our work
+                work = [(l[0],) for l in links]
+                link_sets = thread_out_work(work,self.get_links)
+
+                # we got back a list of lists, flatten
+                links = []
+                for l_list in link_sets:
+                    links += l_list
+
+                # filter them
+                links = set(self._clean_links(links))
+
+        except o.Exception, ex:
+            # fail, ignore for now
+            raise o.Exception('Exception getting links: %s' % (ex.msg))
+        except Exception, ex:
+            # fail, ignore for now
+            raise o.Exception('Exception getting links: %s' % (ex))
+
+        # return our bounty
+        return list(set(found_links))
+
+    def single_thread_link_spider(self, root_url, max_depth):
+        """ returns back all the links to given depth """
+
+        # starting at the root url follow all links
+        # keep following those links until they exceed the depth
+
         # list of urls to scrape, (url,depth)
-        found_links = self.get_links(root_url)
+        found_links = self._clean_links(self.get_links(root_url))
         links = set([(x,0) for x in found_links])
         while links:
             # next ?
@@ -124,9 +180,8 @@ class ScraperHandler(object):
             # make sure we're not in too deep
             if not depth + 1 > max_depth:
                 try:
-                    new_links = [x.strip() for x in self.get_links(page_url)]
-                    # we only want http(s) (other being mailto, javascript etc)
-                    new_links = [x for x in new_links if x.startswith('http')]
+                    new_links = self.get_links()
+                    new_links = self._clean_links(new_links)
                     found_links += new_links
                     new_links = set([(x,depth+1) for x in new_links if x.startswith('http')])
                     print 'new links: %s' % len(new_links)
