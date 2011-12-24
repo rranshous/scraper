@@ -78,6 +78,10 @@ class ScraperHandler(object):
     def get_images(self, url):
         """ returns back the src for all images on page """
 
+        # if it's an image forget it
+        if url.endswith(('JPG','jpg','JPEG','jpeg','png','PNG')):
+            return []
+
         # request the url
         try:
             with srvs_connect(Requester) as c:
@@ -86,6 +90,14 @@ class ScraperHandler(object):
                 return []
         except Exception, ex:
             raise o.Exception('Could not make request: %s %s' % (url,ex))
+
+        # if it's an image than we know the answer
+        try:
+            if self._is_img_data(r.content):
+                return []
+        except:
+            # we'll see
+            pass
 
         # get all the images
         soup = BS(r.content)
@@ -113,6 +125,8 @@ class ScraperHandler(object):
             if not depth + 1 > max_depth:
                 try:
                     new_links = [x.strip() for x in self.get_links(page_url)]
+                    # we only want http(s) (other being mailto, javascript etc)
+                    new_links = [x for x in new_links if x.startswith('http')]
                     links += [(x,depth+1) for x in new_links]
                     found_links += new_links
                 except o.Exception, ex:

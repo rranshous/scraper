@@ -42,18 +42,24 @@ def connect_discovery():
 
 
 @contextmanager
-def connect(service,host=None,port=None):
+def connect(service,host=None,port=None,rediscover=True):
 
-    # if we didn't get a host / port use service
-    # discovery to find it
-    with connect_discovery() as c:
-        service_name = service.__name__
-        service_details = c.find_service(service_name)
-        assert service_details, "Could not find service in discovery"
-        port = service_details.port
-        host = service_details.host
+    if rediscover and client_lookup.get(service):
+        # refresh the client
+        transport_lookup.get(service).close()
+        del transport_lookup[service]
+        del client_lookup[service]
 
     if not client_lookup.get(service):
+        # if we didn't get a host / port use service
+        # discovery to find it
+        with connect_discovery() as c:
+            service_name = service.__name__
+            service_details = c.find_service(service_name)
+            assert service_details, "Could not find service in discovery"
+            port = service_details.port
+            host = service_details.host
+
         transport = TSocket.TSocket(host,port)
         transport = TTransport.TBufferedTransport(transport)
         protocol = TBinaryProtocol.TBinaryProtocol(transport)
