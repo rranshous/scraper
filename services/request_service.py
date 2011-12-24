@@ -50,19 +50,17 @@ class LiveRequestHandler(RequestHandler):
     def live_urlopen(self, request):
 
         try:
-            getter = getattr(requests,request.method or 'get')
-        except Exception, ex:
-            # problem getting the request'r, prob bad method
-            raise o.Exception('Bad request method: %s' % request.method)
-
-        try:
             # use the requests getter to get the resource
-            http_response = getter(request.url,
-                                   data=request.data,
-                                   cookies=request.cookies)
+            http_response = requests.request(request.method,
+                                             request.url,
+                                             cookies=request.cookies,
+                                             # don't just get headers
+                                             prefetch=True,
+                                             # we want raw data, not unicode
+                                             config={'decode_unicode':False})
         except Exception, ex:
             # problem actually trying to get the resource
-            raise o.Exception('HTTP Request Error')
+            raise o.Exception('HTTP Request Error: %s' % ex)
 
         # build our response obj / aka copy that shit
         response = o.Response()
@@ -104,7 +102,7 @@ class CachingRequestHandler(RequestHandler):
         cache_key = self.get_cache_key(request)
         data = self._serialize_o(response)
         self.rc.set(cache_key,data)
-        # TODO: expire self.rc.expire(
+        self.rc.expire(cache_key,self.cache_duration)
         return True
 
     def get_cache_key(self,request):
@@ -126,8 +124,6 @@ class CachingRequestHandler(RequestHandler):
 
 class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
 
-    service_name = 'requester'
-
     def urlopen(self, request):
         print 'urlopen'
         # check the cache
@@ -146,7 +142,7 @@ class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
         # make our request
         if not response and allowed_rate:
             response = self.live_urlopen(request)
-            print 'live response: %s' % str(response)
+            print 'live response'
             # update the cache
             self.set_cache(request,response)
 
