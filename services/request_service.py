@@ -44,6 +44,8 @@ class RequestHandler(object):
 
 class LiveRequestHandler(RequestHandler):
 
+    timeout = 5
+
     def urlopen(self,request):
         return self.live_urlopen(request)
 
@@ -54,6 +56,7 @@ class LiveRequestHandler(RequestHandler):
             http_response = requests.request(request.method,
                                              request.url,
                                              cookies=request.cookies,
+                                             timeout=self.timeout,
                                              # don't just get headers
                                              prefetch=True,
                                              # we want raw data, not unicode
