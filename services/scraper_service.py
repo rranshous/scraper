@@ -20,6 +20,10 @@ class ScraperHandler(object):
 
     not_html_ext = ('jpg','jpeg','pdf','gif','png')
 
+    def __init__(self,redis_host='127.0.0.1'):
+        self.redis_host = redis_host
+        self.rc = Redis(self.redis_host)
+
     @staticmethod
     def _is_img_data(data):
         """
@@ -41,7 +45,7 @@ class ScraperHandler(object):
     def get_links(self, url):
         """ returns back the href for all links on page """
 
-        url = fixurl(url.strip())
+        url = url.strip()
         print 'get_links: %s' % url
 
         # if it's an image forget it
@@ -59,6 +63,14 @@ class ScraperHandler(object):
         except Exception, ex:
             raise o.Exception('Could not make request: %s %s' % (url,ex))
 
+        # see if we have a cache of links
+        digest = sha1(r.content).hexdigest()
+        cache_key = 'scraper:get_links:content:%s' % digest
+        cache_response = self.rc.smembers(cache_key)
+        if cache_response:
+            print 'from cache'
+            return cache_response
+
         # if it's an image than we know the answer
         try:
             if self._is_img_data(r.content):
@@ -69,6 +81,7 @@ class ScraperHandler(object):
 
         # get all the links
         try:
+            print 'parsing'
             soup = BS(r.content)
         except o.Exception, ex:
             raise o.Exception('o.Could not parse response: %s %s' % (url,ex))
@@ -81,12 +94,15 @@ class ScraperHandler(object):
                 link_href = urljoin(url,link.get('href'))
                 links.append(link_href)
 
+        # set our cache, no need to expire b/c it's based on the content
+        self.rc.sadd(cache_key,*list(links))
+
         return links
 
     def get_images(self, url):
         """ returns back the src for all images on page """
 
-        url = fixurl(url.strip())
+        url = url.strip()
         print 'get_images: %s' % url
 
         # only care to parse html pages
@@ -102,6 +118,13 @@ class ScraperHandler(object):
         except Exception, ex:
             raise o.Exception('Could not make request: %s %s' % (url,ex))
 
+        # see if we have a cache of links
+        digest = sha1(r.content).hexdigest()
+        cache_key = 'scraper:get_images:content:%s' % digest
+        cache_response = self.rc.smembers(cache_key)
+        if cache_response:
+            return cache_response
+
         # if it's an image than we know the answer
         try:
             if self._is_img_data(r.content):
@@ -116,6 +139,9 @@ class ScraperHandler(object):
         for img in soup.findAll('img'):
             if img.get('src'):
                 images.append(img.get('src'))
+
+        # set our cache, no need to expire b/c it's based on the content
+        self.rc.sadd(cache_key,links)
 
         return images
 
