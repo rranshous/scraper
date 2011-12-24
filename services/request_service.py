@@ -1,5 +1,6 @@
 from requester import Requester, ttypes as o
 import requests
+from lib.helpers import fixurl
 
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
@@ -53,7 +54,7 @@ class LiveRequestHandler(RequestHandler):
 
         try:
             # use the requests getter to get the resource
-            http_response = requests.request(request.method,
+            http_response = requests.request(request.method or 'get',
                                              request.url,
                                              cookies=request.cookies,
                                              timeout=self.timeout,
@@ -68,7 +69,7 @@ class LiveRequestHandler(RequestHandler):
         # build our response obj / aka copy that shit
         response = o.Response()
         response.status_code = http_response.status_code
-        response.url = http_response.url
+        response.url = fixurl(http_response.url)
         response.headers = http_response.headers
         response.content = http_response.content
 

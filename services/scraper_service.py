@@ -9,6 +9,7 @@ from urlparse import urljoin
 from cStringIO import StringIO
 import imghdr
 from urlparse import urlparse
+from lib.helpers import fixurl
 
 from thread_utils import thread_out_work
 
@@ -40,6 +41,7 @@ class ScraperHandler(object):
     def get_links(self, url):
         """ returns back the href for all links on page """
 
+        url = fixurl(url.strip())
         print 'get_links: %s' % url
 
         # if it's an image forget it
@@ -49,7 +51,7 @@ class ScraperHandler(object):
         # request the url
         try:
             with srvs_connect(Requester) as c:
-                r = c.urlopen(ro.Request(method='get',url=url.strip()))
+                r = c.urlopen(ro.Request(url=url))
             if not r:
                 return []
         except o.Exception, ex:
@@ -84,6 +86,9 @@ class ScraperHandler(object):
     def get_images(self, url):
         """ returns back the src for all images on page """
 
+        url = fixurl(url.strip())
+        print 'get_images: %s' % url
+
         # only care to parse html pages
         if url.lower().endswith(self.not_html_ext):
             return []
@@ -91,7 +96,7 @@ class ScraperHandler(object):
         # request the url
         try:
             with srvs_connect(Requester) as c:
-                r = c.urlopen(ro.Request(method='get',url=url.strip()))
+                r = c.urlopen(ro.Request(url=url))
             if not r:
                 return []
         except Exception, ex:
