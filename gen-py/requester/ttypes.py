@@ -84,6 +84,7 @@ class Request:
    - url
    - data
    - cookies
+   - no_cache
   """
 
   thrift_spec = (
@@ -92,13 +93,15 @@ class Request:
     (2, TType.STRING, 'url', None, None, ), # 2
     (3, TType.MAP, 'data', (TType.STRING,None,TType.STRING,None), None, ), # 3
     (4, TType.MAP, 'cookies', (TType.STRING,None,TType.STRING,None), None, ), # 4
+    (5, TType.BOOL, 'no_cache', None, None, ), # 5
   )
 
-  def __init__(self, method=None, url=None, data=None, cookies=None,):
+  def __init__(self, method=None, url=None, data=None, cookies=None, no_cache=None,):
     self.method = method
     self.url = url
     self.data = data
     self.cookies = cookies
+    self.no_cache = no_cache
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -141,6 +144,11 @@ class Request:
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.BOOL:
+          self.no_cache = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -175,6 +183,10 @@ class Request:
         oprot.writeString(viter17)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
+    if self.no_cache != None:
+      oprot.writeFieldBegin('no_cache', TType.BOOL, 5)
+      oprot.writeBool(self.no_cache)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
     def validate(self):
@@ -199,6 +211,8 @@ class Response:
    - url
    - headers
    - content
+   - from_cache
+   - timestamp
   """
 
   thrift_spec = (
@@ -207,13 +221,17 @@ class Response:
     (2, TType.STRING, 'url', None, None, ), # 2
     (3, TType.MAP, 'headers', (TType.STRING,None,TType.STRING,None), None, ), # 3
     (4, TType.STRING, 'content', None, None, ), # 4
+    (5, TType.BOOL, 'from_cache', None, None, ), # 5
+    (6, TType.I32, 'timestamp', None, None, ), # 6
   )
 
-  def __init__(self, status_code=None, url=None, headers=None, content=None,):
+  def __init__(self, status_code=None, url=None, headers=None, content=None, from_cache=None, timestamp=None,):
     self.status_code = status_code
     self.url = url
     self.headers = headers
     self.content = content
+    self.from_cache = from_cache
+    self.timestamp = timestamp
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -250,6 +268,16 @@ class Response:
           self.content = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.BOOL:
+          self.from_cache = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.I32:
+          self.timestamp = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -279,6 +307,14 @@ class Response:
     if self.content != None:
       oprot.writeFieldBegin('content', TType.STRING, 4)
       oprot.writeString(self.content)
+      oprot.writeFieldEnd()
+    if self.from_cache != None:
+      oprot.writeFieldBegin('from_cache', TType.BOOL, 5)
+      oprot.writeBool(self.from_cache)
+      oprot.writeFieldEnd()
+    if self.timestamp != None:
+      oprot.writeFieldBegin('timestamp', TType.I32, 6)
+      oprot.writeI32(self.timestamp)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

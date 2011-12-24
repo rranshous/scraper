@@ -95,7 +95,8 @@ class ScraperHandler(object):
                 links.append(link_href)
 
         # set our cache, no need to expire b/c it's based on the content
-        self.rc.sadd(cache_key,*list(links))
+        if links:
+            self.rc.sadd(cache_key,*list(links))
 
         return links
 
@@ -181,6 +182,7 @@ class ScraperHandler(object):
                 link, depth = links.pop()
 
                 # where does it link to ?
+                result_links = []
                 try:
                     result_links = self.get_links(link)
                 except o.Exception, ex:
@@ -224,6 +226,14 @@ class ScraperHandler(object):
 
         # return our bounty
         return list(found_links)
+
+    def site_spider(self,root_url):
+        """
+        spider every page of the site we can find, report back
+        with links found and their details
+        """
+        pass
+
 
 
 def run():

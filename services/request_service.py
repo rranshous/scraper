@@ -1,6 +1,7 @@
 from requester import Requester, ttypes as o
 import requests
 from lib.helpers import fixurl
+from time import time
 
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
@@ -130,10 +131,15 @@ class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
 
     def urlopen(self, request):
         print 'urlopen'
-        # check the cache
-        response = self.cache_urlopen(request)
-        if response:
-            print 'response from cache'
+
+        response = None
+
+        if not request.no_cache:
+            # check the cache
+            response = self.cache_urlopen(request)
+            response.from_cache = True
+            if response:
+                print 'response from cache'
 
         # check and make sure we aren't going to have
         # to fail due to rate limiting for the site
@@ -146,6 +152,7 @@ class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
         # make our request
         if not response and allowed_rate:
             response = self.live_urlopen(request)
+            response.timestamp = time()
             print 'live response'
             # update the cache
             self.set_cache(request,response)
