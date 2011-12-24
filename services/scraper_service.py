@@ -120,6 +120,8 @@ class ScraperHandler(object):
     def link_spider(self, root_url, max_depth):
         """ returns back all the links to given depth """
 
+        print 'link spider: %s %s' % (root_url,max_depth)
+
         # starting at the root url follow all links
         # keep following those links until they exceed the depth
 
@@ -127,8 +129,12 @@ class ScraperHandler(object):
             # initial links
             found_links = set(self._clean_links(self.get_links(root_url)))
 
-            # list of urls to scrape, (url,depth)
-            links = set([(x,1) for x in found_links])
+            # if our max depth is 1 or 0 we are done
+            if max_depth > 1:
+                # list of urls to scrape, (url,depth)
+                links = set([(x,1) for x in found_links])
+            else:
+                links = []
 
             while links:
 
@@ -157,7 +163,7 @@ class ScraperHandler(object):
 
                 found_links.update(result_links)
 
-                print 'total links: %s' % len(links)
+                print 'workable links: %s' % len(links)
 
         except o.Exception, ex:
             # fail, ignore for now
