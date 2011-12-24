@@ -156,39 +156,8 @@ class ScraperHandler(object):
             raise o.Exception('Exception getting links: %s' % (ex))
 
         # return our bounty
-        return list(set(found_links))
+        return list(found_links)
 
-    def single_thread_link_spider(self, root_url, max_depth):
-        """ returns back all the links to given depth """
-
-        # starting at the root url follow all links
-        # keep following those links until they exceed the depth
-
-        # list of urls to scrape, (url,depth)
-        found_links = self._clean_links(self.get_links(root_url))
-        links = set([(x,0) for x in found_links])
-        while links:
-            # next ?
-            page_url, depth = links.pop()
-
-            # make sure we're not in too deep
-            if not depth + 1 > max_depth:
-                try:
-                    new_links = self.get_links()
-                    new_links = self._clean_links(new_links)
-                    found_links += new_links
-                    new_links = set([(x,depth+1) for x in new_links if x.startswith('http')])
-                    print 'new links: %s' % len(new_links)
-                    links.update(new_links)
-                except o.Exception, ex:
-                    # fail, ignore for now
-                    print 'o.Exception getting links: %s %s' % (page_url,ex.msg)
-                except Exception, ex:
-                    # fail, ignore for now
-                    print 'Exception getting links: %s %s' % (page_url,ex)
-
-        # return our bounty
-        return list(set(found_links))
 
 def run():
     from run_services import serve_service
