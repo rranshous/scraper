@@ -46,6 +46,13 @@ class Iface:
     """
     pass
 
+  def gen_sitemap(self, root_url):
+    """
+    Parameters:
+     - root_url
+    """
+    pass
+
 
 class Client(Iface):
   def __init__(self, iprot, oprot=None):
@@ -186,6 +193,38 @@ class Client(Iface):
       raise result.ex
     raise TApplicationException(TApplicationException.MISSING_RESULT, "site_spider failed: unknown result");
 
+  def gen_sitemap(self, root_url):
+    """
+    Parameters:
+     - root_url
+    """
+    self.send_gen_sitemap(root_url)
+    return self.recv_gen_sitemap()
+
+  def send_gen_sitemap(self, root_url):
+    self._oprot.writeMessageBegin('gen_sitemap', TMessageType.CALL, self._seqid)
+    args = gen_sitemap_args()
+    args.root_url = root_url
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_gen_sitemap(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = gen_sitemap_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.ex != None:
+      raise result.ex
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "gen_sitemap failed: unknown result");
+
 
 class Processor(Iface, TProcessor):
   def __init__(self, handler):
@@ -195,6 +234,7 @@ class Processor(Iface, TProcessor):
     self._processMap["get_images"] = Processor.process_get_images
     self._processMap["link_spider"] = Processor.process_link_spider
     self._processMap["site_spider"] = Processor.process_site_spider
+    self._processMap["gen_sitemap"] = Processor.process_gen_sitemap
 
   def process(self, iprot, oprot):
     (name, type, seqid) = iprot.readMessageBegin()
@@ -263,6 +303,20 @@ class Processor(Iface, TProcessor):
     except Exception, ex:
       result.ex = ex
     oprot.writeMessageBegin("site_spider", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_gen_sitemap(self, seqid, iprot, oprot):
+    args = gen_sitemap_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = gen_sitemap_result()
+    try:
+      result.success = self._handler.gen_sitemap(args.root_url)
+    except Exception, ex:
+      result.ex = ex
+    oprot.writeMessageBegin("gen_sitemap", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -817,6 +871,136 @@ class site_spider_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.STRUCT, 0)
       self.success.write(oprot)
+      oprot.writeFieldEnd()
+    if self.ex != None:
+      oprot.writeFieldBegin('ex', TType.STRUCT, 1)
+      self.ex.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class gen_sitemap_args:
+  """
+  Attributes:
+   - root_url
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'root_url', None, None, ), # 1
+  )
+
+  def __init__(self, root_url=None,):
+    self.root_url = root_url
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.root_url = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('gen_sitemap_args')
+    if self.root_url != None:
+      oprot.writeFieldBegin('root_url', TType.STRING, 1)
+      oprot.writeString(self.root_url)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class gen_sitemap_result:
+  """
+  Attributes:
+   - success
+   - ex
+  """
+
+  thrift_spec = (
+    (0, TType.STRING, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'ex', (Exception, Exception.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, ex=None,):
+    self.success = success
+    self.ex = ex
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRING:
+          self.success = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.ex = Exception()
+          self.ex.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('gen_sitemap_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.STRING, 0)
+      oprot.writeString(self.success)
       oprot.writeFieldEnd()
     if self.ex != None:
       oprot.writeFieldBegin('ex', TType.STRUCT, 1)

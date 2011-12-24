@@ -2,6 +2,7 @@ from requester import Requester, ttypes as ro
 from scraper import Scraper, ttypes as o
 
 import requests
+from xml.sax.saxutils import escape
 from hashlib import sha1
 from redis import Redis
 from BeautifulSoup import BeautifulSoup as BS
@@ -10,6 +11,7 @@ from cStringIO import StringIO
 import imghdr
 from urlparse import urlparse
 from lib.helpers import fixurl
+from lib.httpheader import parse_http_datetime
 
 from thread_utils import thread_out_work
 
@@ -186,13 +188,14 @@ class ScraperHandler(object):
                 link, depth = links.pop()
 
                 # where does it link to ?
-                result_links = []
                 try:
                     result_links = self.get_links(link)
                 except o.Exception, ex:
                     print 'oException getting link: %s %s' % (link,ex.msg)
+                    result_links = []
                 except Exception, ex:
                     print 'Exception getting link: %s %s' % (link,ex)
+                    result_links = []
 
                 # clean up the result
                 result_links = self._clean_links(result_links)
@@ -261,6 +264,56 @@ class ScraperHandler(object):
             response.pages.append(page)
 
         return response
+
+    def gen_sitemap(self, root_url):
+        """
+        generates an xml sitemap for given site via spider
+
+        ex from sitemap.org)
+
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url>
+        <loc>http://www.example.com/</loc>
+        <lastmod>2005-01-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        </url>
+        </urlset>
+        """
+
+        # spider the site
+        print 'gen sitemap: %s' % root_url
+        spider_response = self.site_spider(root_url)
+
+        output = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">"""
+
+        print 'creating entries'
+
+        # go through all the pages, creating entries
+        entry_template = """
+<url>
+    <loc>%(url)s</loc>
+    <lastmod>%(lastmod)s</lastmod>
+</url>
+"""
+        for page in spider_response.pages:
+            args = { 'url':escape(page.url),
+                     'lastmod':'' }
+            # simple for now
+            if page.response.headers.get('last-modified'):
+                lm = page.response.headers.get('last-modified')
+                lm = parse_http_datetime(lm)
+                lm = lm.strftime('%Y-%m-%d')
+                args['lastmod'] = escape(lm)
+            output += entry_template % args
+
+        output += "\n</urlset>"
+
+        print 'done: %s' % len(output)
+
+        return output
 
 
 def run():

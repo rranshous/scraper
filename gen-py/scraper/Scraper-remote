@@ -25,6 +25,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '   get_images(string url)'
   print '   link_spider(string root_url, i32 max_depth, bool off_root)'
   print '  SpiderResponse site_spider(string root_url)'
+  print '  string gen_sitemap(string root_url)'
   print ''
   sys.exit(0)
 
@@ -98,6 +99,12 @@ elif cmd == 'site_spider':
     print 'site_spider requires 1 args'
     sys.exit(1)
   pp.pprint(client.site_spider(args[0],))
+
+elif cmd == 'gen_sitemap':
+  if len(args) != 1:
+    print 'gen_sitemap requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.gen_sitemap(args[0],))
 
 else:
   print 'Unrecognized method %s' % cmd

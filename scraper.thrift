@@ -39,6 +39,10 @@ service Scraper {
     /* page url -> details about site pages */
     SpiderResponse site_spider(1: string root_url)
     throws (1: Exception ex);
+
+    /* site root -> xml site map */
+    string gen_sitemap(1: string root_url)
+    throws (1: Exception ex);
 }
 
 
