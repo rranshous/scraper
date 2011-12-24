@@ -123,40 +123,34 @@ class ScraperHandler(object):
         # starting at the root url follow all links
         # keep following those links until they exceed the depth
 
-        def get_links(url):
-            try:
-                self.get_links(url)
-            except o.Exception, ex:
-                # fail, ignore for now
-                print 'To.Exception getting links: %s' % (ex.msg)
-            except Exception, ex:
-                # fail, ignore for now
-                print 'TException getting links: %s' % (ex)
-
         try:
             # initial links
-            found_links = self._clean_links(self.get_links(root_url))
+            found_links = set(self._clean_links(self.get_links(root_url)))
 
             # list of urls to scrape, (url,depth)
             links = set([(x,0) for x in found_links])
 
             while links:
 
-                # fan out our work
-                work = [(l[0],) for l in links]
-                link_sets = thread_out_work(work,self.get_links)
+                link, depth = links.pop()
 
-                # we got back a list of lists, flatten
-                links = []
-                for l_list in link_sets:
-                    links += l_list
+                try:
+                    result_links = self.get_links(link)
+                except o.Exception, ex:
+                    print 'oException getting link: %s %s' % (link,ex.msg)
+                except Exception, ex:
+                    print 'Exception getting link: %s %s' % (link,ex)
 
-                # filter them
-                links = set(self._clean_links(links))
+                result_links = set(self._clean_links(result_links))
+
+                found_links.update(result_links)
+
+                if depth + 1 <= max_depth:
+                    links.update(set([(l,depth+1) for l in result_links]))
 
         except o.Exception, ex:
             # fail, ignore for now
-            raise o.Exception('Exception getting links: %s' % (ex.msg))
+            raise o.Exception('oException getting links: %s' % (ex.msg))
         except Exception, ex:
             # fail, ignore for now
             raise o.Exception('Exception getting links: %s' % (ex))
