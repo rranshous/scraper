@@ -7,20 +7,21 @@ exception Exception
 }
 
 struct Request {
-    1: string method,
-    2: string url,
-    3: map<string,string> data,
-    4: map<string,string> cookies,
-    5: bool no_cache
+    1: string url,
+    2: optional string method,
+    3: optional map<string,string> data,
+    4: optional map<string,string> cookies,
+    5: optional bool no_cache = 0
 }
 
 struct Response {
-    1: i32 status_code,
-    2: string url,
-    3: map<string,string> headers,
-    4: string content,
-    5: bool from_cache,
-    6: i32 timestamp
+    1: string url,
+    2: optional i32 status_code,
+    3: optional map<string,string> headers,
+    4: optional string content,
+    5: optional bool from_cache,
+    6: optional double response_time,
+    7: optional double timestamp
 }
 
 

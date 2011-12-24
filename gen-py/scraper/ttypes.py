@@ -5,6 +5,8 @@
 #
 
 from thrift.Thrift import *
+import requester.ttypes
+
 
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol, TProtocol
@@ -65,6 +67,198 @@ class Exception(Exception):
 
   def __str__(self):
     return repr(self)
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Page:
+  """
+  Attributes:
+   - url
+   - response
+   - links
+   - images
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'url', None, None, ), # 1
+    (2, TType.STRUCT, 'response', (requester.ttypes.Response, requester.ttypes.Response.thrift_spec), None, ), # 2
+    (3, TType.LIST, 'links', (TType.STRING,None), None, ), # 3
+    (4, TType.LIST, 'images', (TType.STRING,None), None, ), # 4
+  )
+
+  def __init__(self, url=None, response=None, links=None, images=None,):
+    self.url = url
+    self.response = response
+    self.links = links
+    self.images = images
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.url = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.response = requester.ttypes.Response()
+          self.response.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.LIST:
+          self.links = []
+          (_etype3, _size0) = iprot.readListBegin()
+          for _i4 in xrange(_size0):
+            _elem5 = iprot.readString();
+            self.links.append(_elem5)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.LIST:
+          self.images = []
+          (_etype9, _size6) = iprot.readListBegin()
+          for _i10 in xrange(_size6):
+            _elem11 = iprot.readString();
+            self.images.append(_elem11)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Page')
+    if self.url != None:
+      oprot.writeFieldBegin('url', TType.STRING, 1)
+      oprot.writeString(self.url)
+      oprot.writeFieldEnd()
+    if self.response != None:
+      oprot.writeFieldBegin('response', TType.STRUCT, 2)
+      self.response.write(oprot)
+      oprot.writeFieldEnd()
+    if self.links != None:
+      oprot.writeFieldBegin('links', TType.LIST, 3)
+      oprot.writeListBegin(TType.STRING, len(self.links))
+      for iter12 in self.links:
+        oprot.writeString(iter12)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.images != None:
+      oprot.writeFieldBegin('images', TType.LIST, 4)
+      oprot.writeListBegin(TType.STRING, len(self.images))
+      for iter13 in self.images:
+        oprot.writeString(iter13)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class SpiderResponse:
+  """
+  Attributes:
+   - url
+   - pages
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'url', None, None, ), # 1
+    (2, TType.LIST, 'pages', (TType.STRUCT,(Page, Page.thrift_spec)), None, ), # 2
+  )
+
+  def __init__(self, url=None, pages=None,):
+    self.url = url
+    self.pages = pages
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.url = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.LIST:
+          self.pages = []
+          (_etype17, _size14) = iprot.readListBegin()
+          for _i18 in xrange(_size14):
+            _elem19 = Page()
+            _elem19.read(iprot)
+            self.pages.append(_elem19)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('SpiderResponse')
+    if self.url != None:
+      oprot.writeFieldBegin('url', TType.STRING, 1)
+      oprot.writeString(self.url)
+      oprot.writeFieldEnd()
+    if self.pages != None:
+      oprot.writeFieldBegin('pages', TType.LIST, 2)
+      oprot.writeListBegin(TType.STRUCT, len(self.pages))
+      for iter20 in self.pages:
+        iter20.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)

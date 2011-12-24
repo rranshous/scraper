@@ -52,7 +52,7 @@ class LiveRequestHandler(RequestHandler):
         return self.live_urlopen(request)
 
     def live_urlopen(self, request):
-
+        s = time()
         try:
             # use the requests getter to get the resource
             http_response = requests.request(request.method or 'get',
@@ -73,6 +73,8 @@ class LiveRequestHandler(RequestHandler):
         response.url = fixurl(http_response.url)
         response.headers = http_response.headers
         response.content = http_response.content
+        response.timestamp = time()
+        response.response_time = (time() - s)
 
         # and we're done!
         return response
@@ -99,6 +101,7 @@ class CachingRequestHandler(RequestHandler):
 
         # deserialize our response
         response = self._deserialize_o(o.Response,cache_response)
+        response.from_cache = True
         return response
 
     def set_cache(self,request,response):
@@ -137,7 +140,6 @@ class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
         if not request.no_cache:
             # check the cache
             response = self.cache_urlopen(request)
-            response.from_cache = True
             if response:
                 print 'response from cache'
 
@@ -152,7 +154,6 @@ class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
         # make our request
         if not response and allowed_rate:
             response = self.live_urlopen(request)
-            response.timestamp = time()
             print 'live response'
             # update the cache
             self.set_cache(request,response)

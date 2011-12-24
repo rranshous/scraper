@@ -24,6 +24,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '   get_links(string url)'
   print '   get_images(string url)'
   print '   link_spider(string root_url, i32 max_depth, bool off_root)'
+  print '  SpiderResponse site_spider(string root_url)'
   print ''
   sys.exit(0)
 
@@ -91,6 +92,12 @@ elif cmd == 'link_spider':
     print 'link_spider requires 3 args'
     sys.exit(1)
   pp.pprint(client.link_spider(args[0],eval(args[1]),eval(args[2]),))
+
+elif cmd == 'site_spider':
+  if len(args) != 1:
+    print 'site_spider requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.site_spider(args[0],))
 
 else:
   print 'Unrecognized method %s' % cmd

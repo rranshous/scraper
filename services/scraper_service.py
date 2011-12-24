@@ -55,7 +55,7 @@ class ScraperHandler(object):
         # request the url
         try:
             with srvs_connect(Requester) as c:
-                r = c.urlopen(ro.Request(url=url))
+                r = c.urlopen(ro.Request(url))
             if not r:
                 return []
         except o.Exception, ex:
@@ -113,9 +113,11 @@ class ScraperHandler(object):
         # request the url
         try:
             with srvs_connect(Requester) as c:
-                r = c.urlopen(ro.Request(url=url))
+                r = c.urlopen(ro.Request(url))
             if not r:
                 return []
+        except o.Exception, ex:
+            raise o.Exception('o.Could not make request: %s %s' % (url,ex))
         except Exception, ex:
             raise o.Exception('Could not make request: %s %s' % (url,ex))
 
@@ -124,6 +126,7 @@ class ScraperHandler(object):
         cache_key = 'scraper:get_images:content:%s' % digest
         cache_response = self.rc.smembers(cache_key)
         if cache_response:
+            print 'from cached'
             return cache_response
 
         # if it's an image than we know the answer
@@ -142,7 +145,8 @@ class ScraperHandler(object):
                 images.append(img.get('src'))
 
         # set our cache, no need to expire b/c it's based on the content
-        self.rc.sadd(cache_key,links)
+        if images:
+            self.rc.sadd(cache_key,images)
 
         return images
 
@@ -232,8 +236,31 @@ class ScraperHandler(object):
         spider every page of the site we can find, report back
         with links found and their details
         """
-        pass
 
+        response = o.SpiderResponse(url=root_url)
+        response.pages = []
+
+        # starting @ the root spider all the sites we can find w/in
+        # the domain
+        links = self.link_spider(root_url,100,True)
+
+        # all that data is nice and cached so we can reprocess it
+        for link in links + [root_url]:
+            page = o.Page(url=link)
+            page.links = self.get_links(link)
+            page.images = self.get_images(link)
+            try:
+                with srvs_connect(Requester) as c:
+                    r = c.urlopen(ro.Request(link))
+                page.response = r
+            except o.Exception, ex:
+                # problem w/ response = no response
+                print 'o.request exception: %s %s' % (link,ex.msg)
+            except Exception, ex:
+                print 'request exception: %s %s' % (link,ex)
+            response.pages.append(page)
+
+        return response
 
 
 def run():

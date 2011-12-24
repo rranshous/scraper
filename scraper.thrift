@@ -1,9 +1,24 @@
+include "requester.thrift"
+
 namespace py scraper
 
 /* Simple exception type */
 exception Exception
 {
     1:string msg
+}
+
+
+struct Page {
+    1: string url,
+    2: optional requester.Response response,
+    3: optional list<string> links,
+    4: optional list<string> images,
+}
+
+struct SpiderResponse {
+    1: string url,
+    2: optional list<Page> pages
 }
 
 service Scraper {
@@ -19,6 +34,10 @@ service Scraper {
     list<string> link_spider(1: string root_url, 
                              2: i32 max_depth, 
                              3: bool off_root)
+    throws (1: Exception ex);
+
+    /* page url -> details about site pages */
+    SpiderResponse site_spider(1: string root_url)
     throws (1: Exception ex);
 }
 
