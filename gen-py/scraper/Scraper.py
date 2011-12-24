@@ -30,11 +30,12 @@ class Iface:
     """
     pass
 
-  def link_spider(self, root_url, max_depth):
+  def link_spider(self, root_url, max_depth, off_root):
     """
     Parameters:
      - root_url
      - max_depth
+     - off_root
     """
     pass
 
@@ -110,20 +111,22 @@ class Client(Iface):
       raise result.ex
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_images failed: unknown result");
 
-  def link_spider(self, root_url, max_depth):
+  def link_spider(self, root_url, max_depth, off_root):
     """
     Parameters:
      - root_url
      - max_depth
+     - off_root
     """
-    self.send_link_spider(root_url, max_depth)
+    self.send_link_spider(root_url, max_depth, off_root)
     return self.recv_link_spider()
 
-  def send_link_spider(self, root_url, max_depth):
+  def send_link_spider(self, root_url, max_depth, off_root):
     self._oprot.writeMessageBegin('link_spider', TMessageType.CALL, self._seqid)
     args = link_spider_args()
     args.root_url = root_url
     args.max_depth = max_depth
+    args.off_root = off_root
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -202,7 +205,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = link_spider_result()
     try:
-      result.success = self._handler.link_spider(args.root_url, args.max_depth)
+      result.success = self._handler.link_spider(args.root_url, args.max_depth, args.off_root)
     except Exception, ex:
       result.ex = ex
     oprot.writeMessageBegin("link_spider", TMessageType.REPLY, seqid)
@@ -494,17 +497,20 @@ class link_spider_args:
   Attributes:
    - root_url
    - max_depth
+   - off_root
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'root_url', None, None, ), # 1
     (2, TType.I32, 'max_depth', None, None, ), # 2
+    (3, TType.BOOL, 'off_root', None, None, ), # 3
   )
 
-  def __init__(self, root_url=None, max_depth=None,):
+  def __init__(self, root_url=None, max_depth=None, off_root=None,):
     self.root_url = root_url
     self.max_depth = max_depth
+    self.off_root = off_root
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -525,6 +531,11 @@ class link_spider_args:
           self.max_depth = iprot.readI32();
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.off_root = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -542,6 +553,10 @@ class link_spider_args:
     if self.max_depth != None:
       oprot.writeFieldBegin('max_depth', TType.I32, 2)
       oprot.writeI32(self.max_depth)
+      oprot.writeFieldEnd()
+    if self.off_root != None:
+      oprot.writeFieldBegin('off_root', TType.BOOL, 3)
+      oprot.writeBool(self.off_root)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

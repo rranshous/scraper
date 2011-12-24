@@ -8,6 +8,7 @@ from BeautifulSoup import BeautifulSoup as BS
 from urlparse import urljoin
 from cStringIO import StringIO
 import imghdr
+from urlparse import urlparse
 
 from thread_utils import thread_out_work
 
@@ -15,6 +16,8 @@ from lib.client import connect as srvs_connect
 
 
 class ScraperHandler(object):
+
+    not_html_ext = ('jpg','jpeg','pdf','gif','png')
 
     @staticmethod
     def _is_img_data(data):
@@ -40,7 +43,7 @@ class ScraperHandler(object):
         print 'get_links: %s' % url
 
         # if it's an image forget it
-        if url.endswith(('JPG','jpg','JPEG','jpeg','png','PNG')):
+        if url.lower().endswith(self.not_html_ext):
             return []
 
         # request the url
@@ -81,8 +84,8 @@ class ScraperHandler(object):
     def get_images(self, url):
         """ returns back the src for all images on page """
 
-        # if it's an image forget it
-        if url.endswith(('JPG','jpg','JPEG','jpeg','png','PNG')):
+        # only care to parse html pages
+        if url.lower().endswith(self.not_html_ext):
             return []
 
         # request the url
@@ -117,7 +120,16 @@ class ScraperHandler(object):
         links = [x.strip() for x in links if x.startswith('http')]
         return links
 
-    def link_spider(self, root_url, max_depth):
+    def _off_root(self,root,link):
+        """ returns true if links is from same domain """
+        # TODO: cache root url netloc
+        return urlparse(root).netloc == urlparse(link).netloc
+
+    def _clean_off_root(self, root, links):
+        """ returns list filtered for those off root """
+        return [l for l in links if self._off_root(root,l)]
+
+    def link_spider(self, root_url, max_depth, limit_domain=False):
         """ returns back all the links to given depth """
 
         print 'link spider: %s %s' % (root_url,max_depth)
@@ -126,15 +138,11 @@ class ScraperHandler(object):
         # keep following those links until they exceed the depth
 
         try:
-            # initial links
-            found_links = set(self._clean_links(self.get_links(root_url)))
+            # our first link is root
+            links = set([(root_url,0)])
 
-            # if our max depth is 1 or 0 we are done
-            if max_depth > 1:
-                # list of urls to scrape, (url,depth)
-                links = set([(x,1) for x in found_links])
-            else:
-                links = []
+            # initial links
+            found_links = set()
 
             while links:
 
@@ -150,7 +158,14 @@ class ScraperHandler(object):
                     print 'Exception getting link: %s %s' % (link,ex)
 
                 # clean up the result
-                result_links = set(self._clean_links(result_links))
+                result_links = self._clean_links(result_links)
+
+                # if we are limiting the domain, we only want
+                # links which are part of the root url
+                if limit_domain:
+                    result_links = self._clean_off_root(root_url,result_links)
+
+                result_links = set(result_links)
 
                 if result_links:
                     print 'result links: %s' % len(result_links)
@@ -158,8 +173,12 @@ class ScraperHandler(object):
                 # if the next lvl isn't max depth, add in new links
                 if depth + 1 <= max_depth:
                     # only add links we haven't seen before
-                    ss = set([(l,depth+1) for l in result_links - found_links])
-                    links.update(ss)
+                    ts = result_links - found_links
+
+                    # add in our depth
+                    ts = [(l,depth+1) for l in ts]
+
+                    links.update(set(ts))
 
                 found_links.update(result_links)
 

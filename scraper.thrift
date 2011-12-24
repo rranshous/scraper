@@ -16,7 +16,9 @@ service Scraper {
     throws (1: Exception ex);
 
     /* page url -> all links to depth */
-    list<string> link_spider(1: string root_url, 2: i32 max_depth)
+    list<string> link_spider(1: string root_url, 
+                             2: i32 max_depth, 
+                             3: bool off_root)
     throws (1: Exception ex);
 }
 
