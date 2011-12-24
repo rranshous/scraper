@@ -152,6 +152,15 @@ class MatureRequestHandler(CachingRequestHandler,LiveRequestHandler):
     def check_rate_allowed(self, request):
         return 1
 
+    def warm_cache(self, request):
+        """
+        pulls a page but doesn't return it, just cache's it
+        """
+        print 'warm cache'
+
+        # this will return me a response but i ignore it
+        self.urlopen(request)
+
 def run():
     from run_services import serve_service
     serve_service(Requester, MatureRequestHandler())

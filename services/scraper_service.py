@@ -128,12 +128,14 @@ class ScraperHandler(object):
             found_links = set(self._clean_links(self.get_links(root_url)))
 
             # list of urls to scrape, (url,depth)
-            links = set([(x,0) for x in found_links])
+            links = set([(x,1) for x in found_links])
 
             while links:
 
+                # get the next url
                 link, depth = links.pop()
 
+                # where does it link to ?
                 try:
                     result_links = self.get_links(link)
                 except o.Exception, ex:
@@ -141,12 +143,21 @@ class ScraperHandler(object):
                 except Exception, ex:
                     print 'Exception getting link: %s %s' % (link,ex)
 
+                # clean up the result
                 result_links = set(self._clean_links(result_links))
+
+                if result_links:
+                    print 'result links: %s' % len(result_links)
+
+                # if the next lvl isn't max depth, add in new links
+                if depth + 1 <= max_depth:
+                    # only add links we haven't seen before
+                    ss = set([(l,depth+1) for l in result_links - found_links])
+                    links.update(ss)
 
                 found_links.update(result_links)
 
-                if depth + 1 <= max_depth:
-                    links.update(set([(l,depth+1) for l in result_links]))
+                print 'total links: %s' % len(links)
 
         except o.Exception, ex:
             # fail, ignore for now
