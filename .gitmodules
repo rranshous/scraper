@@ -1,3 +1,6 @@
 [submodule "thread_utils"]
 	path = thread_utils
 	url = git@github.com:rranshous/thread_utils.git
+[submodule "lib/discovery"]
+	path = lib/discovery
+	url = git@github.com:rranshous/discovery.git
