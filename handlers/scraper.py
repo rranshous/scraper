@@ -1,4 +1,4 @@
-from requester import Requester, ttypes as ro
+from tgen.requester import Requester, ttypes as ro
 from scraper import Scraper, ttypes as o
 
 import requests

@@ -1,4 +1,4 @@
-include "requester.thrift"
+include "../lib/requester/tdefs/requester.thrift"
 
 namespace py scraper
 
