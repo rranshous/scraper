@@ -5,7 +5,7 @@
 #
 
 from thrift.Thrift import *
-import requester.ttypes
+import lib.requester.tgen.requester as requester
 
 
 from thrift.transport import TTransport

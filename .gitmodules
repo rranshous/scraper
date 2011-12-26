@@ -4,3 +4,6 @@
 [submodule "lib/discovery"]
 	path = lib/discovery
 	url = git@github.com:rranshous/discovery.git
+[submodule "lib/requester"]
+	path = lib/requester
+	url = git@github.com:rranshous/requester.git

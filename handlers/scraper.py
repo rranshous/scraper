@@ -1,5 +1,5 @@
-from tgen.requester import Requester, ttypes as ro
-from scraper import Scraper, ttypes as o
+from lib.requester import Requester, o as ro
+from tgen.scraper import Scraper, ttypes as o
 
 import requests
 from xml.sax.saxutils import escape
@@ -317,7 +317,7 @@ class ScraperHandler(object):
 
 
 def run():
-    from run_services import serve_service
+    from lib.discovery.lib import serve_service
     serve_service(Scraper, ScraperHandler())
 
 if __name__ == '__main__':
