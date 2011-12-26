@@ -15,8 +15,7 @@ from lib.httpheader import parse_http_datetime
 
 from thread_utils import thread_out_work
 
-from lib.client import connect as srvs_connect
-
+from lib.discovery import connect as srvs_connect
 
 class ScraperHandler(object):
 
@@ -317,7 +316,7 @@ class ScraperHandler(object):
 
 
 def run():
-    from lib.discovery.lib import serve_service
+    from lib.discovery import serve_service
     serve_service(Scraper, ScraperHandler())
 
 if __name__ == '__main__':
