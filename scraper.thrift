@@ -46,12 +46,3 @@ service Scraper {
 }
 
 
-/*
-service TumblrImageScraper {
-    validate_page_url
-    get_page_urls
-    get_pic_urls
-    save_pic
-    generate_pic_details
-}
-*/
