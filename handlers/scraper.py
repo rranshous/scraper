@@ -125,6 +125,9 @@ class ScraperHandler(object):
             print 'ex'
             raise o.Exception('Could not make request: %s %s' % (url,ex))
 
+        if not r.content:
+            return []
+
         # see if we have a cache of links
         digest = sha1(r.content).hexdigest()
         cache_key = 'scraper:get_images:content:%s' % digest
