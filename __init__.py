@@ -1,1 +1,1 @@
-from scraper import Scraper, ttypes as o
+from tgen.scraper import Scraper, ttypes as o
