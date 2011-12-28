@@ -117,6 +117,7 @@ class ScraperHandler(object):
             with srvs_connect(Requester) as c:
                 r = c.urlopen(ro.Request(url))
             if not r:
+                print 'get image no response: %s' % url
                 return []
         except o.Exception, ex:
             print 'ex'
