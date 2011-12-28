@@ -244,7 +244,7 @@ class ScraperHandler(object):
 
         # starting @ the root spider all the sites we can find w/in
         # the domain
-        links = self.link_spider(root_url,100,True)
+        links = self.link_spider(root_url,1000,True)
 
         # all that data is nice and cached so we can reprocess it
         for link in links + [root_url]:
