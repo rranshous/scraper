@@ -127,6 +127,7 @@ class ScraperHandler(object):
             raise o.Exception('Could not make request: %s %s' % (url,ex))
 
         if not r.content:
+            print 'no content: %s' % url
             return []
 
         # see if we have a cache of links
