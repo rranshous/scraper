@@ -1,0 +1,7 @@
+replace:
+
+import requester.ttypes
+
+with:
+
+import lib.requester.tgen.requester as requester

@@ -113,13 +113,16 @@ class ScraperHandler(object):
 
         # request the url
         try:
+            print 'get image making request: %s' % url
             with srvs_connect(Requester) as c:
                 r = c.urlopen(ro.Request(url))
             if not r:
                 return []
         except o.Exception, ex:
+            print 'ex'
             raise o.Exception('o.Could not make request: %s %s' % (url,ex))
         except Exception, ex:
+            print 'ex'
             raise o.Exception('Could not make request: %s %s' % (url,ex))
 
         # see if we have a cache of links
@@ -127,12 +130,13 @@ class ScraperHandler(object):
         cache_key = 'scraper:get_images:content:%s' % digest
         cache_response = self.rc.smembers(cache_key)
         if cache_response:
-            print 'from cached'
+            print 'from cached: %s' % url
             return cache_response
 
         # if it's an image than we know the answer
         try:
             if self._is_img_data(r.content):
+                print 'not html: %s' % url
                 return []
         except:
             # we'll see
@@ -140,14 +144,18 @@ class ScraperHandler(object):
 
         # get all the images
         soup = BS(r.content)
-        images = []
+        images = set()
         for img in soup.findAll('img'):
             if img.get('src'):
-                images.append(img.get('src'))
+                images.add(img.get('src'))
+        images = list(images)
 
         # set our cache, no need to expire b/c it's based on the content
         if images:
-            self.rc.sadd(cache_key,images)
+            for image in images:
+                self.rc.sadd(cache_key,image)
+
+        print 'returning get images: %s' % url
 
         return images
 
@@ -162,17 +170,28 @@ class ScraperHandler(object):
         # TODO: cache root url netloc
         return urlparse(root).netloc == urlparse(link).netloc
 
+    def _off_prefix(self,prefix,link):
+        if not prefix.startswith('/'):
+            prefix = '/%s' % prefix
+        return urlparse(link).path.startswith(prefix)
+
     def _clean_off_root(self, root, links):
         """ returns list filtered for those off root """
         return [l for l in links if self._off_root(root,l)]
 
-    def link_spider(self, root_url, max_depth, limit_domain=False):
+    def _clean_off_prefix(self, prefix, links):
+        return [l for l in links if self._off_prefix(prefix,l)]
+
+    def link_spider(self, root_url, max_depth, limit_domain=False,
+                    prefix=None):
         """ returns back all the links to given depth """
 
         print 'link spider: %s %s' % (root_url,max_depth)
 
         # starting at the root url follow all links
         # keep following those links until they exceed the depth
+
+        have_failed = set()
 
         try:
             # our first link is root
@@ -191,10 +210,18 @@ class ScraperHandler(object):
                     result_links = self.get_links(link)
                 except o.Exception, ex:
                     print 'oException getting link: %s %s' % (link,ex.msg)
-                    result_links = []
+                    if not link in have_failed:
+                        print 'retrying'
+                        links.add((link,depth))
+                        have_failed.add(link)
+                    continue
                 except Exception, ex:
                     print 'Exception getting link: %s %s' % (link,ex)
-                    result_links = []
+                    if not link in have_failed:
+                        print 'retrying'
+                        links.add((link,depth))
+                        have_failed.add(link)
+                    continue
 
                 # clean up the result
                 result_links = self._clean_links(result_links)
@@ -203,6 +230,9 @@ class ScraperHandler(object):
                 # links which are part of the root url
                 if limit_domain:
                     result_links = self._clean_off_root(root_url,result_links)
+
+                if prefix:
+                    result_links = self._clean_off_prefix(prefix,result_links)
 
                 result_links = set(result_links)
 

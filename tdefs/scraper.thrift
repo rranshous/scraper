@@ -34,7 +34,8 @@ service Scraper {
     /* page url -> all links to depth */
     list<string> link_spider(1: string root_url, 
                              2: i32 max_depth, 
-                             3: bool off_root)
+                             3: bool off_root,
+                             4: string prefix)
     throws (1: Exception ex);
 
     /* page url -> details about site pages */
