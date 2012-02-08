@@ -2,6 +2,7 @@ from lib.requester import Requester, o as ro
 from tgen.scraper import Scraper, ttypes as o
 
 import requests
+import memcache
 from xml.sax.saxutils import escape
 from hashlib import sha1
 from redis import Redis
@@ -21,9 +22,11 @@ class ScraperHandler(object):
 
     not_html_ext = ('jpg','jpeg','pdf','gif','png')
 
-    def __init__(self,redis_host='127.0.0.1'):
-        self.redis_host = redis_host
-        self.rc = Redis(self.redis_host)
+    def __init__(self, memcaches_host='127.0.0.1', memcached_port=11211):
+        self.memcached_host = memcached_host
+        self.memcached_port = memcached_port
+        self.mc = memcache.Client(['%s:%s' %
+                            (self.memcached_host,self.memcached_port)])
 
     @staticmethod
     def _is_img_data(data):
@@ -64,14 +67,6 @@ class ScraperHandler(object):
         except Exception, ex:
             raise o.Exception('Could not make request: %s %s' % (url,ex))
 
-        # see if we have a cache of links
-        digest = sha1(r.content).hexdigest()
-        cache_key = 'scraper:get_links:content:%s' % digest
-        cache_response = self.rc.smembers(cache_key)
-        if cache_response:
-            print 'from cache'
-            return cache_response
-
         # if it's an image than we know the answer
         try:
             if self._is_img_data(r.content):
@@ -79,6 +74,16 @@ class ScraperHandler(object):
         except:
             # we'll see
             pass
+
+        # see if we have a cache of links
+        digest = sha1(r.content).hexdigest()
+        cache_key = 'scraper:get_links:content:%s' % digest
+        cache_response = self.mc.get(cache_key)
+        if cache_response:
+            # we r storing as new line seperated urls
+            cache_response = cache_response.split('\n')
+            print 'from cache'
+            return cache_response
 
         # get all the links
         try:
@@ -97,7 +102,8 @@ class ScraperHandler(object):
 
         # set our cache, no need to expire b/c it's based on the content
         if links:
-            self.rc.sadd(cache_key,*list(links))
+            # store as newline seperated values
+            self.mc.set(cache_key,'\n'.join(links))
 
         return links
 
@@ -133,8 +139,10 @@ class ScraperHandler(object):
         # see if we have a cache of links
         digest = sha1(r.content).hexdigest()
         cache_key = 'scraper:get_images:content:%s' % digest
-        cache_response = self.rc.smembers(cache_key)
+        cache_response = self.mc.get(cache_key)
         if cache_response:
+            # we r storing as new line seperated urls
+            cache_response = cache_response.split('\n')
             print 'from cached: %s' % url
             return cache_response
 
@@ -157,8 +165,7 @@ class ScraperHandler(object):
 
         # set our cache, no need to expire b/c it's based on the content
         if images:
-            for image in images:
-                self.rc.sadd(cache_key,image)
+            self.mc.set(cache_key,'\n'.join(image))
 
         print 'returning get images: %s' % url
 
