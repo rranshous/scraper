@@ -165,7 +165,7 @@ class ScraperHandler(object):
 
         # set our cache, no need to expire b/c it's based on the content
         if images:
-            self.mc.set(cache_key,'\n'.join(image))
+            self.mc.set(cache_key,'\n'.join(images))
 
         print 'returning get images: %s' % url
 
