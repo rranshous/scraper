@@ -160,7 +160,8 @@ class ScraperHandler(object):
         images = set()
         for img in soup.findAll('img'):
             if img.get('src'):
-                images.add(img.get('src'))
+                img_src = urljoin(url,img.get('src'))
+                images.add(img_src)
         images = list(images)
 
         # set our cache, no need to expire b/c it's based on the content
